@@ -2,8 +2,7 @@ package ru.alegor.skypebot.service.plugins;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import ru.alegor.skypebot.service.SkypeBotService;
+import ru.alegor.skypebot.service.BotService;
 
 import javax.annotation.PostConstruct;
 
@@ -13,7 +12,7 @@ public class AbstractPlugin {
     private final String pluginName;
 
     @Autowired
-    private SkypeBotService botService;
+    private BotService botService;
 
     public AbstractPlugin(String pluginName) {
         this.pluginName = pluginName;

@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class SkypeBotService {
+public class BotService {
 
     @Getter
     private Map<String, AbstractPlugin> plugins;
@@ -47,7 +47,7 @@ public class SkypeBotService {
         botFrameworkService.sendMessage(activity.getServiceUrl(), reply);
     }
 
-    public SkypeBotService() {
+    public BotService() {
         plugins = new HashMap<>();
     }
 }

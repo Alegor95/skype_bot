@@ -2,7 +2,7 @@ package ru.alegor.skypebot.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.alegor.skypebot.service.SkypeBotService;
+import ru.alegor.skypebot.service.BotService;
 import ru.alegor.skypebot.service.botframework.ServerValidationService;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
 
@@ -16,7 +16,7 @@ public class EndpointController {
     @Autowired
     private ServerValidationService serverValidationService;
     @Autowired
-    private SkypeBotService botService;
+    private BotService botService;
 
     @PostMapping("activity")
     private void recieveActivity(@RequestBody ActivityDTO activity, @RequestHeader("Authorization") String auth,

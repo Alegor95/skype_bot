@@ -6,8 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.alegor.skypebot.model.InfoDTO;
-import ru.alegor.skypebot.service.SkypeBotService;
-import ru.alegor.skypebot.service.botframework.ServerValidationService;
+import ru.alegor.skypebot.service.BotService;
 
 @RestController
 @RequestMapping("/")
@@ -17,7 +16,7 @@ public class MainController {
     private String version;
 
     @Autowired
-    private SkypeBotService botService;
+    private BotService botService;
 
     @GetMapping("/info")
     public InfoDTO info() {
