@@ -18,8 +18,6 @@ public class MainController {
 
     @Autowired
     private SkypeBotService botService;
-    @Autowired
-    private ServerValidationService serverValidationService; //TMP
 
     @GetMapping("/info")
     public InfoDTO info() {
