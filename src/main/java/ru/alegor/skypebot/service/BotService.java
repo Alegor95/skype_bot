@@ -2,16 +2,13 @@ package ru.alegor.skypebot.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.alegor.skypebot.service.botframework.ActivityBuilder;
-import ru.alegor.skypebot.service.botframework.BotFrameworkService;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
-import ru.alegor.skypebot.service.botframework.model.ConversationAccountDTO;
-import ru.alegor.skypebot.service.botframework.model.ConversationDTO;
 import ru.alegor.skypebot.service.plugins.AbstractPlugin;
+import ru.alegor.skypebot.service.plugins.event.MessageRecievedEvent;
+import ru.alegor.skypebot.service.plugins.event.UserRemoveEvent;
+import ru.alegor.skypebot.service.plugins.event.UsersAddEvent;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,9 +19,6 @@ public class BotService {
 
     @Getter
     private Map<String, AbstractPlugin> plugins;
-
-    @Autowired
-    private BotFrameworkService botFrameworkService;
 
     public void registerPlugin(AbstractPlugin plugin) {
         if (plugins.containsKey(plugin.getPluginName())) {
@@ -39,32 +33,37 @@ public class BotService {
     }
 
     public void processActivity(ActivityDTO activity) {
-        //Reply
-        ActivityDTO reply = ActivityBuilder.buildMessageActivity()
-                .setConversation(activity.getConversation())
-                .setFrom(activity.getRecipient())
-                .setLocale(activity.getLocale())
-                .setRecipient(activity.getFrom())
-                .setReplyToId(activity.getId())
-                .setText("Спасибо за запрос! Он будет обработан в ближайшее время.")
-                .get();
-        botFrameworkService.sendReplyMessage(activity.getServiceUrl(), reply);
-        //Create conversation
-        ConversationDTO conversation = new ConversationDTO();
-        conversation.setTopicName("Bot chat");
-        conversation.setGroup(false);
-        conversation.setMembers(Collections.singleton(activity.getFrom()));
-        conversation.setBot(activity.getRecipient());
-        String conversationId = botFrameworkService.createConversation(activity.getServiceUrl(), conversation);
-        //Send message to new conversation
-        ActivityDTO initial = ActivityBuilder.buildMessageActivity()
-                .setConversation(new ConversationAccountDTO(conversationId))
-                .setFrom(activity.getRecipient())
-                .setRecipient(activity.getFrom())
-                .setLocale(activity.getLocale())
-                .setText("Добро пожаловать!")
-                .get();
-        botFrameworkService.sendMessage(activity.getServiceUrl(), initial);
+        //Check event type
+        log.info("Получено сообщение типа {}", activity.getType());
+        switch (activity.getType()) {
+            case "message": {
+                log.info("Найдено событие получение сообщения");
+                plugins.values().stream()
+                        .filter(_p -> _p instanceof MessageRecievedEvent)
+                        .map(_p -> (MessageRecievedEvent)_p)
+                        .forEach(_p -> _p.messageReceived(activity));
+            } break;
+            case "conversationUpdate": {
+                if (activity.getMembersRemoved() != null && !activity.getMembersRemoved().isEmpty()) {
+                    log.info("Найдено событие удаление пользователя");
+                    plugins.values().stream()
+                        .filter(_p -> _p instanceof UserRemoveEvent)
+                        .map(_p -> (UserRemoveEvent)_p)
+                        .forEach(_p -> {
+                            _p.onUsersRemove(activity, activity.getConversation(), activity.getMembersRemoved());
+                        });
+                }
+                if (activity.getMembersAdded() != null && !activity.getMembersAdded().isEmpty()) {
+                    log.info("Найдено событие добавление пользователя");
+                    plugins.values().stream()
+                            .filter(_p -> _p instanceof UsersAddEvent)
+                            .map(_p -> (UsersAddEvent)_p)
+                            .forEach(_p -> {
+                                _p.onUsersAdd(activity, activity.getConversation(), activity.getMembersAdded());
+                            });
+                }
+            } break;
+        }
     }
 
     public BotService() {
