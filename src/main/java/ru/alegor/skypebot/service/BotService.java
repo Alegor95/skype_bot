@@ -7,8 +7,11 @@ import org.springframework.stereotype.Service;
 import ru.alegor.skypebot.service.botframework.ActivityBuilder;
 import ru.alegor.skypebot.service.botframework.BotFrameworkService;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
+import ru.alegor.skypebot.service.botframework.model.ConversationAccountDTO;
+import ru.alegor.skypebot.service.botframework.model.ConversationDTO;
 import ru.alegor.skypebot.service.plugins.AbstractPlugin;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +39,7 @@ public class BotService {
     }
 
     public void processActivity(ActivityDTO activity) {
+        //Reply
         ActivityDTO reply = ActivityBuilder.buildMessageActivity()
                 .setConversation(activity.getConversation())
                 .setFrom(activity.getRecipient())
@@ -44,7 +48,23 @@ public class BotService {
                 .setReplyToId(activity.getId())
                 .setText("Спасибо за запрос! Он будет обработан в ближайшее время.")
                 .get();
-        botFrameworkService.sendMessage(activity.getServiceUrl(), reply);
+        botFrameworkService.sendReplyMessage(activity.getServiceUrl(), reply);
+        //Create conversation
+        ConversationDTO conversation = new ConversationDTO();
+        conversation.setTopicName("Bot chat");
+        conversation.setGroup(false);
+        conversation.setMembers(Collections.singleton(activity.getFrom()));
+        conversation.setBot(activity.getRecipient());
+        String conversationId = botFrameworkService.createConversation(activity.getServiceUrl(), conversation);
+        //Send message to new conversation
+        ActivityDTO initial = ActivityBuilder.buildMessageActivity()
+                .setConversation(new ConversationAccountDTO(conversationId))
+                .setFrom(activity.getRecipient())
+                .setRecipient(activity.getFrom())
+                .setLocale(activity.getLocale())
+                .setText("Добро пожаловать!")
+                .get();
+        botFrameworkService.sendMessage(activity.getServiceUrl(), initial);
     }
 
     public BotService() {
