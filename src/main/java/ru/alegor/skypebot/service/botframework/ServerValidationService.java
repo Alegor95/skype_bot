@@ -1,6 +1,5 @@
 package ru.alegor.skypebot.service.botframework;
 
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
