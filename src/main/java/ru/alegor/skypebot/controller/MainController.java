@@ -9,7 +9,7 @@ import ru.alegor.skypebot.model.InfoDTO;
 import ru.alegor.skypebot.service.BotService;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api/")
 public class MainController {
 
     @Value("${application.version}")
@@ -18,7 +18,7 @@ public class MainController {
     @Autowired
     private BotService botService;
 
-    @GetMapping("/info")
+    @GetMapping("info")
     public InfoDTO info() {
         return new InfoDTO(version, botService.getPlugins().keySet());
     }
