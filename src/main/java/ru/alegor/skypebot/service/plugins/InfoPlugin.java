@@ -6,14 +6,17 @@ import ru.alegor.skypebot.service.botframework.ActivityBuilder;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
 import ru.alegor.skypebot.service.botframework.model.ChannelAccountDTO;
 import ru.alegor.skypebot.service.botframework.model.ConversationAccountDTO;
+import ru.alegor.skypebot.service.botframework.model.ConversationDTO;
+import ru.alegor.skypebot.service.plugins.event.ContactAddedEvent;
 import ru.alegor.skypebot.service.plugins.event.MessageRecievedEvent;
 import ru.alegor.skypebot.service.plugins.event.UsersAddEvent;
 
 import java.util.Collection;
+import java.util.Collections;
 
 @Component
 @Slf4j
-public class InfoPlugin extends AbstractPlugin implements UsersAddEvent, MessageRecievedEvent {
+public class InfoPlugin extends AbstractPlugin implements UsersAddEvent, MessageRecievedEvent, ContactAddedEvent {
 
     private static final String pluginName = "info";
 
@@ -35,24 +38,40 @@ public class InfoPlugin extends AbstractPlugin implements UsersAddEvent, Message
                 .setFrom(context.getRecipient())
                 .setLocale(context.getLocale())
                 .setRecipient(context.getFrom())
-                .setReplyToId(context.getId())
                 .setText("Важная информация: " + context.getText())
                 .get();
-        botFrameworkService.sendReplyMessage(context.getServiceUrl(), reply);
+        botFrameworkService.sendMessage(context.getServiceUrl(), reply);
     }
 
     @Override
     public void onUsersAdd(ActivityDTO context,
                            ConversationAccountDTO conversation, Collection<ChannelAccountDTO> users) {
         for (ChannelAccountDTO user : users) {
-            log.debug("Приветствуем пользователя {}", user.getName());
-            ActivityDTO welcome = ActivityBuilder.buildMessageActivity()
-                    .setConversation(conversation)
-                    .setFrom(context.getRecipient())
-                    .setRecipient(user)
-                    .setText("Дороу " + user.getName())
-                    .get();
-            botFrameworkService.sendReplyMessage(context.getServiceUrl(), welcome);
+            sendWelcomeMessage(context, conversation, user);
         }
+    }
+
+    @Override
+    public void onContactAdded(ActivityDTO activity) {
+        log.debug("Создаем диалог с новым пользователем");
+        ConversationDTO newConversation = new ConversationDTO();
+        newConversation.setBot(activity.getRecipient());
+        newConversation.setMembers(Collections.singleton(activity.getFrom()));
+        newConversation.setTopicName(activity.getRecipient().getName());
+        newConversation.setGroup(false);
+        String id = botFrameworkService.createConversation(activity.getServiceUrl(), newConversation);
+        //Send welcome message
+        sendWelcomeMessage(activity, new ConversationAccountDTO(id), activity.getFrom());
+    }
+
+    private void sendWelcomeMessage(ActivityDTO activity, ConversationAccountDTO conversation, ChannelAccountDTO user) {
+        log.debug("Приветствуем пользователя {}", user.getName());
+        ActivityDTO welcome = ActivityBuilder.buildMessageActivity()
+                .setConversation(conversation)
+                .setFrom(activity.getRecipient())
+                .setRecipient(user)
+                .setText("Дороу " + user.getName())
+                .get();
+        botFrameworkService.sendMessage(activity.getServiceUrl(), welcome);
     }
 }

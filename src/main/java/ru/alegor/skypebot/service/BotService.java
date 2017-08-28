@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
 import ru.alegor.skypebot.service.plugins.AbstractPlugin;
-import ru.alegor.skypebot.service.plugins.event.MessageRecievedEvent;
-import ru.alegor.skypebot.service.plugins.event.UserRemoveEvent;
-import ru.alegor.skypebot.service.plugins.event.UsersAddEvent;
+import ru.alegor.skypebot.service.plugins.event.*;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +35,7 @@ public class BotService {
         log.info("Получено сообщение типа {}", activity.getType());
         switch (activity.getType()) {
             case "message": {
-                log.debug("Найдено событие получение сообщения");
+                log.debug("Найдено событие: получение сообщения");
                 plugins.values().stream()
                         .filter(_p -> _p instanceof MessageRecievedEvent)
                         .map(_p -> (MessageRecievedEvent)_p)
@@ -45,7 +43,7 @@ public class BotService {
             } break;
             case "conversationUpdate": {
                 if (activity.getMembersRemoved() != null && !activity.getMembersRemoved().isEmpty()) {
-                    log.debug("Найдено событие удаление пользователя");
+                    log.debug("Найдено событие: удаление пользователя");
                     plugins.values().stream()
                         .filter(_p -> _p instanceof UserRemoveEvent)
                         .map(_p -> (UserRemoveEvent)_p)
@@ -54,13 +52,34 @@ public class BotService {
                         });
                 }
                 if (activity.getMembersAdded() != null && !activity.getMembersAdded().isEmpty()) {
-                    log.debug("Найдено событие добавление пользователя");
+                    log.debug("Найдено событие: добавление пользователя");
                     plugins.values().stream()
                             .filter(_p -> _p instanceof UsersAddEvent)
                             .map(_p -> (UsersAddEvent)_p)
                             .forEach(_p -> {
                                 _p.onUsersAdd(activity, activity.getConversation(), activity.getMembersAdded());
                             });
+                }
+            } break;
+            case "contactRelationUpdate": {
+                if ("add".equals(activity.getAction())) {
+                    log.debug("Найдено событие: добавление в список контактов");
+                    plugins.values().stream()
+                            .filter(_p -> _p instanceof ContactAddedEvent)
+                            .map(_p -> (ContactAddedEvent)_p)
+                            .forEach(_p -> {
+                                _p.onContactAdded(activity);
+                            });
+                }
+                if ("remove".equals(activity.getAction())) {
+                    log.debug("Найдено событие: удаление из списка контактов");
+                    plugins.values().stream()
+                            .filter(_p -> _p instanceof ContactRemovedEvent)
+                            .map(_p -> (ContactRemovedEvent)_p)
+                            .forEach(_p -> {
+                                _p.onContactRemoved(activity);
+                            });
+
                 }
             } break;
         }
