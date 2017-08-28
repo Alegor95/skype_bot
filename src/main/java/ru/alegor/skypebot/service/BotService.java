@@ -37,7 +37,7 @@ public class BotService {
         log.info("Получено сообщение типа {}", activity.getType());
         switch (activity.getType()) {
             case "message": {
-                log.info("Найдено событие получение сообщения");
+                log.debug("Найдено событие получение сообщения");
                 plugins.values().stream()
                         .filter(_p -> _p instanceof MessageRecievedEvent)
                         .map(_p -> (MessageRecievedEvent)_p)
@@ -45,7 +45,7 @@ public class BotService {
             } break;
             case "conversationUpdate": {
                 if (activity.getMembersRemoved() != null && !activity.getMembersRemoved().isEmpty()) {
-                    log.info("Найдено событие удаление пользователя");
+                    log.debug("Найдено событие удаление пользователя");
                     plugins.values().stream()
                         .filter(_p -> _p instanceof UserRemoveEvent)
                         .map(_p -> (UserRemoveEvent)_p)
@@ -54,7 +54,7 @@ public class BotService {
                         });
                 }
                 if (activity.getMembersAdded() != null && !activity.getMembersAdded().isEmpty()) {
-                    log.info("Найдено событие добавление пользователя");
+                    log.debug("Найдено событие добавление пользователя");
                     plugins.values().stream()
                             .filter(_p -> _p instanceof UsersAddEvent)
                             .map(_p -> (UsersAddEvent)_p)
