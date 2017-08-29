@@ -1,8 +1,11 @@
 package ru.alegor.skypebot.service;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.alegor.skypebot.model.BotCommandDTO;
+import ru.alegor.skypebot.service.botframework.ActivityBuilder;
+import ru.alegor.skypebot.service.botframework.BotFrameworkService;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
 import ru.alegor.skypebot.service.plugins.AbstractPlugin;
 import ru.alegor.skypebot.service.plugins.event.*;
@@ -15,8 +18,13 @@ import java.util.Map;
 @Slf4j
 public class BotService {
 
-    @Getter
+    @Autowired
+    private BotFrameworkService botFrameworkService;
+
     private Map<String, AbstractPlugin> plugins;
+    private Map<String, BotCommandDTO> registeredCommands;
+    private final char startSymbol = '/';
+    private final String helpCommand = "help";
 
     public void registerPlugin(AbstractPlugin plugin) {
         if (plugins.containsKey(plugin.getPluginName())) {
@@ -40,10 +48,43 @@ public class BotService {
         switch (activity.getType()) {
             case "message": {
                 log.debug("Найдено событие: получение сообщения");
+                String text = activity.getText();
+                //Удаляем имя бота из начала сообщения, если оно есть
+                if (text.indexOf(activity.getRecipient().getName()) == 0) {
+                    text.replace(activity.getRecipient().getName(), "");
+                }
+                if (text.length() == 0 || text.charAt(0) != startSymbol) {
+                    log.debug("Команда не адресована данному боту");
+                    return;
+                }
+                final String pureText = text.substring(1);
+                if (helpCommand.equals(pureText)) {
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("Доступные команды:\n");
+                    for (BotCommandDTO command : registeredCommands.values()) {
+                        builder.append(startSymbol)
+                                .append(command.getCommand())
+                                .append(" - ")
+                                .append(command.getDescription())
+                                .append("\n");
+                    }
+                    sendReply(activity, builder.toString());
+                    return;
+                }
+                BotCommandDTO botCommand = registeredCommands.get(pureText.split(" ")[0]);
+                if (botCommand == null) {
+                    String commandUnsupportedText = new StringBuilder()
+                            .append("Команда ").append(startSymbol).append(pureText).append(" не поддерживается.\n")
+                            .append("Воспользуйтесь командой ").append(startSymbol).append(helpCommand)
+                            .append(" для помощи")
+                            .toString();
+                    sendReply(activity, commandUnsupportedText);
+                    return;
+                }
                 plugins.values().stream()
-                        .filter(_p -> _p instanceof MessageRecievedEvent)
+                        .filter(_p -> botCommand.getCommandOwner().isInstance(_p))
                         .map(_p -> (MessageRecievedEvent)_p)
-                        .forEach(_p -> _p.messageReceived(activity));
+                        .forEach(_p -> _p.messageReceived(activity, pureText));
             } break;
             case "conversationUpdate": {
                 if (activity.getMembersRemoved() != null && !activity.getMembersRemoved().isEmpty()) {
@@ -89,7 +130,30 @@ public class BotService {
         }
     }
 
+    public void registerCommand(String command, String description, Class<? extends AbstractPlugin> commandOwner) {
+        if (registeredCommands.containsKey(command) || helpCommand.equals(command)) {
+            throw new IllegalStateException("Команда " + command + " уже зарегистрирована");
+        }
+        if (!MessageRecievedEvent.class.isAssignableFrom(commandOwner)) {
+            throw new IllegalStateException("Команды может регистрировать только плагин типа MessageRecievedEvent");
+        }
+        registeredCommands.put(command, new BotCommandDTO(command, description, commandOwner));
+    }
+
+    protected void sendReply(ActivityDTO activity, String text) {
+        ActivityDTO reply = ActivityBuilder.buildMessageActivity()
+                .setConversation(activity.getConversation())
+                .setFrom(activity.getRecipient())
+                .setLocale(activity.getLocale())
+                .setRecipient(activity.getFrom())
+                .setReplyToId(activity.getId())
+                .setText(text)
+                .get();
+        botFrameworkService.sendReplyMessage(activity.getServiceUrl(), reply);
+    }
+
     public BotService() {
         plugins = new HashMap<>();
+        registeredCommands = new HashMap<>();
     }
 }
