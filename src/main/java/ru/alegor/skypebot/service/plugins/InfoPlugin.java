@@ -72,6 +72,7 @@ public class InfoPlugin extends AbstractPlugin implements UsersAddEvent, Message
                 .setFrom(activity.getRecipient())
                 .setRecipient(user)
                 .setText("Дороу " + user.getName())
+                .setReplyToId(activity.getId())
                 .get();
         botFrameworkService.sendMessage(activity.getServiceUrl(), welcome);
     }
