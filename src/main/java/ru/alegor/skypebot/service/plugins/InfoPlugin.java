@@ -47,7 +47,8 @@ public class InfoPlugin extends AbstractPlugin implements UsersAddEvent, Message
     public void onUsersAdd(ActivityDTO context,
                            ConversationAccountDTO conversation, Collection<ChannelAccountDTO> users) {
         for (ChannelAccountDTO user : users) {
-            sendWelcomeMessage(context, conversation, user);
+            //Игнорируем добавление пользователя, если это бот
+            if (!user.equals(context.getRecipient())) sendWelcomeMessage(context, conversation, user);
         }
     }
 

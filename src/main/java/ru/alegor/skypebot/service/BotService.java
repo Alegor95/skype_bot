@@ -33,6 +33,10 @@ public class BotService {
     public void processActivity(ActivityDTO activity) {
         //Check event type
         log.info("Получено сообщение типа {}", activity.getType());
+        if (activity.getRecipient().equals(activity.getFrom())) {
+            log.warn("Получатель и отправитель сообщения совпадают, игнорируем его.");
+            return;
+        }
         switch (activity.getType()) {
             case "message": {
                 log.debug("Найдено событие: получение сообщения");
