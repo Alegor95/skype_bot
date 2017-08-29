@@ -47,14 +47,14 @@ public class BotService {
         }
         switch (activity.getType()) {
             case "message": {
-                log.debug("Найдено событие: получение сообщения");
+                log.debug("Найдено событие: получено сообщение {}", activity.getText());
                 String text = activity.getText();
                 //Удаляем имя бота из начала сообщения, если оно есть
                 if (text.indexOf(activity.getRecipient().getName()) == 0) {
-                    text.replace(activity.getRecipient().getName(), "");
+                    text = text.replace(activity.getRecipient().getName(), "").substring(1);
                 }
                 if (text.length() == 0 || text.charAt(0) != startSymbol) {
-                    log.debug("Команда не адресована данному боту");
+                    log.debug("Команда {} не адресована боту {}", text, activity.getRecipient().getName());
                     return;
                 }
                 final String pureText = text.substring(1);
