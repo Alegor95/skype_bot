@@ -8,6 +8,7 @@ import ru.alegor.skypebot.service.botframework.ActivityBuilder;
 import ru.alegor.skypebot.service.botframework.BotFrameworkService;
 import ru.alegor.skypebot.service.botframework.model.ActivityDTO;
 import ru.alegor.skypebot.service.plugins.AbstractPlugin;
+import ru.alegor.skypebot.service.plugins.Configurable;
 import ru.alegor.skypebot.service.plugins.event.*;
 
 import java.util.Collections;
@@ -20,6 +21,8 @@ public class BotService {
 
     @Autowired
     private BotFrameworkService botFrameworkService;
+    @Autowired
+    private BotConfigurationService configurationService;
 
     private Map<String, AbstractPlugin> plugins;
     private Map<String, BotCommandDTO> registeredCommands;
@@ -31,6 +34,9 @@ public class BotService {
             throw new IllegalStateException("Plugin " + plugin.getPluginName() + " already registered");
         }
         plugins.put(plugin.getPluginName(), plugin);
+        if (plugin instanceof Configurable) {
+            configurationService.registerConfiguration(plugin);
+        }
         log.info("Зарегистрирован плагин {}", plugin.getClass().getSimpleName());
     }
 
