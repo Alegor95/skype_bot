@@ -10,7 +10,7 @@ public class EditableCollectionDTO extends NodeDTO {
     private Collection<NodeDTO> nodes;
     private NodeDTO emptyNode;
 
-    public EditableCollectionDTO(NodeType nodeType) {
-        super(nodeType);
+    public EditableCollectionDTO() {
+        super(NodeType.EDITABLE_COLLECTION);
     }
 }

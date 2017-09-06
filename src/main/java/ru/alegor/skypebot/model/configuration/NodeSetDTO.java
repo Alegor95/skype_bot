@@ -8,9 +8,9 @@ import java.util.Collection;
 public class NodeSetDTO extends NodeDTO {
 
     private String legend;
-    private Collection<NodeDTO> nodes;
+    private Collection<? extends NodeDTO> nodes;
 
-    public NodeSetDTO(String legend, Collection<NodeDTO> nodes) {
+    public NodeSetDTO(String legend, Collection<? extends NodeDTO> nodes) {
         super(NodeType.SET);
         this.legend = legend;
         this.nodes = nodes;

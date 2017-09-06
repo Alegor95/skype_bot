@@ -75,7 +75,9 @@ public class WelcomePlugin extends AbstractPlugin implements Configurable, Users
 
     @Override
     public void applyConfiguration(NodeDTO rootNode) {
-        if (rootNode instanceof InputDTO) throw new IllegalArgumentException("Конфигурация должна состоять из InputDTO");
+        if (!(rootNode instanceof InputDTO)) {
+            throw new IllegalArgumentException("Конфигурация должна состоять из InputDTO");
+        }
         InputDTO input = (InputDTO)rootNode;
         if (!inputName.equals(input.getName())) throw new IllegalArgumentException("Некорректное имя инпута");
         this.welcomeText = input.getValue();

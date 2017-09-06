@@ -1,10 +1,7 @@
 package ru.alegor.skypebot.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.alegor.skypebot.model.configuration.NodeDTO;
 import ru.alegor.skypebot.service.BotConfigurationService;
 
@@ -27,5 +24,8 @@ public class ConfigurationController {
         return configurationService.getConfiguration(plugin);
     }
 
-    @
+    @PostMapping("/{plugin}")
+    public void applyConfiguration(@PathVariable("plugin") String plugin, @RequestBody NodeDTO node) {
+        configurationService.applyConfiguration(plugin, node);
+    }
 }

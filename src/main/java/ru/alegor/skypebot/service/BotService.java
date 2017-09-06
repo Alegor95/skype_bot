@@ -146,6 +146,16 @@ public class BotService {
         registeredCommands.put(command, new BotCommandDTO(command, description, commandOwner));
     }
 
+    public void unregisterCommand(String command) {
+        if (!registeredCommands.containsKey(command)) {
+            throw new IllegalStateException("Команда " + command + " не зарегистрирована");
+        }
+        if (helpCommand.equals(command)) {
+            throw new IllegalStateException("Команду " + command + " нельзя удалить");
+        }
+        registeredCommands.remove(command);
+    }
+
     protected void sendReply(ActivityDTO activity, String text) {
         ActivityDTO reply = ActivityBuilder.buildMessageActivity()
                 .setConversation(activity.getConversation())

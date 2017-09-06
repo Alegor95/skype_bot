@@ -1,8 +1,10 @@
 package ru.alegor.skypebot.model.configuration;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
 @Data
+@JsonDeserialize(using = NodeDeserializer.class)
 public abstract class NodeDTO {
 
     protected enum NodeType {
